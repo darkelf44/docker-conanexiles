@@ -167,6 +167,20 @@ function do_update() {
     start_server
 }
 
+function do_restart() {
+    # Stop server
+    if [[ $1 == 1 ]];then
+        stop_server
+    else
+        # Feature Issue #36
+        [[ -z "${CONANEXILES_RESTART_SHUTDOWN_TIMER}" ]] && CONANEXILES_RESTART_SHUTDOWN_TIMER=15
+        start_shutdown_timer "${CONANEXILES_RESTART_SHUTDOWN_TIMER}"
+        stop_server
+    fi
+
+    start_server
+}
+
 generate_modscript() {
     # This Function generates the script, which will be executed to install the mods
     # NOTE: file /conanexiles/ConanSandbox/Mods/mods.txt for modids
@@ -265,6 +279,53 @@ update_check() {
     return 1
 }
 
+restart_check() {
+    # This function checks, then updates the timestamp for the next periodic server restart
+    # Restart times in the list will use the GNU date format. The first call used to initialize $restart_time,
+    # and allways returns true.
+
+    # If the time for the next restart is valid and not yet passed, return error
+    local now=$(date '+%Y%m%d-%H%M%S')
+    if [ ! -z $restart_time ] && [[ $restart_time == NONE || $now < $restart_time ]]; then
+        return 1
+    fi
+
+    # Regex strings
+	local rtime='(([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?|([1-9]|1[012])(:[0-5][0-9])?(:[0-5][0-9])?[[:space:]]+(am|pm))'
+	local rweek='(((mon|tue|wed|thu|fri|sat|sun)[.]?|(monday|tuesday|wednesday|thursday|friday|saturday|sunday))?[[:space:]]+'$rtime')'
+
+    # Read restarts from env
+    IFS=',' read -r -a restarts <<< "$CONANEXILES_RESTARTS"
+
+    # Calculate the time for the next restart
+    restart_time=NONE
+    for rs in "${restarts[@]}"
+    do
+        # Calculate restart time
+        if [[ ${rs,,} =~ ^[[:space:]]*$rtime[[:space:]]*$ ]]; then
+            # Time of day
+            local time=$(date -d "$rs" '+%Y%m%d-%H%M%S')
+            local next=$(date -d "$rs + 1 day" '+%Y%m%d-%H%M%S')
+        elif [[ ${rs,,} =~ ^[[:space:]]*$rweek[[:space:]]*$ ]]; then
+            # Time of week
+            local time=$(date -d "$rs" '+%Y%m%d-%H%M%S')
+            local next=$(date -d "$rs + 1 week" '+%Y%m%d-%H%M%S')
+        else
+            local time=
+            local next=
+        fi
+
+        # Update next restart time
+        if [ ! -z $time ] && [[ $now < $time && $time < $restart_time ]]; then
+            restart_time=$time
+        elif [ ! -z $next ] && [[ $now < $next && $next < $restart_time ]]; then
+            restart_time=$next
+        fi
+    done
+
+    # Return success to signal restart
+    return 0
+}
 
 start_master_loop() {
 
@@ -283,11 +344,17 @@ start_master_loop() {
         (update_check && do_update 1) || install_mods
     fi
 
+    # Initialize restart time
+    restart_check
+
     while true; do
         # Update with shutdown timer
         update_check && do_update 0
 
-        # If the Server crashes we are restarting it 
+        # Sceduled restart
+        restart_check && do_restart 0
+
+        # If the Server crashes we are restarting it
         # NOTE: We are not using supervisord to handle the restart
         [[ $(check_server_running) == 1 ]] && \
                 start_server
@@ -300,6 +367,9 @@ start_slave_loop() {
 
     notifier_info "Mode: Slave - Instance: $(hostname)"
 
+    # Initialize restart time
+    restart_check
+
     while true; do
         if [[ "`redis_cmd_proxy redis_get_update_running`" == 0 ]]; then
             if [[ $(check_server_running) == 0 ]]; then
@@ -311,6 +381,10 @@ start_slave_loop() {
             [[ $(check_server_running) == 1 ]] && \
                 start_server
         fi
+
+        # Sceduled restart
+        restart_check && do_restart 0
+
         sleep 10
     done
 }
