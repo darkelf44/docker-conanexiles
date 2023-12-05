@@ -285,8 +285,9 @@ restart_check() {
     # and allways returns true.
 
     # If the time for the next restart is valid and not yet passed, return error
-    local now=$(date '+%Y%m%d-%H%M%S')
-    if [ ! -z $restart_time ] && [[ $restart_time == NONE || $now < $restart_time ]]; then
+	local format="%Y-%m-%d %H:%M:%S"
+    local now=$(date "+$format")
+    if [ ! -z $restart_time ] && [[ $restart_time == NEVER || $now < $restart_time ]]; then
         return 1
     fi
 
@@ -298,18 +299,18 @@ restart_check() {
     IFS=',' read -r -a restarts <<< "$CONANEXILES_RESTARTS"
 
     # Calculate the time for the next restart
-    restart_time=NONE
+    restart_time=NEVER
     for rs in "${restarts[@]}"
     do
         # Calculate restart time
         if [[ ${rs,,} =~ ^[[:space:]]*$rtime[[:space:]]*$ ]]; then
             # Time of day
-            local time=$(date -d "$rs" '+%Y%m%d-%H%M%S')
-            local next=$(date -d "$rs + 1 day" '+%Y%m%d-%H%M%S')
+            local time=$(date -d "$rs" "+$format")
+            local next=$(date -d "$rs + 1 day" "+$format")
         elif [[ ${rs,,} =~ ^[[:space:]]*$rweek[[:space:]]*$ ]]; then
             # Time of week
-            local time=$(date -d "$rs" '+%Y%m%d-%H%M%S')
-            local next=$(date -d "$rs + 1 week" '+%Y%m%d-%H%M%S')
+            local time=$(date -d "$rs" "+$format")
+            local next=$(date -d "$rs + 1 week" "+$format")
         else
             local time=
             local next=
@@ -322,6 +323,9 @@ restart_check() {
             restart_time=$next
         fi
     done
+	
+	# Log restart times
+    notifier_info "Current Time: $now. Next restart is scheduled at: $restart_time"
 
     # Return success to signal restart
     return 0
