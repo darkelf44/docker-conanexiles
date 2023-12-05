@@ -1,10 +1,9 @@
 # docker-conanexiles
 
-[![Docker Pulls](https://img.shields.io/docker/pulls/alinmear/docker-conanexiles.svg?style=flat)](https://hub.docker.com/r/alinmear/docker-conanexiles/)
-[![Github Stars](https://img.shields.io/github/stars/alinmear/docker-conanexiles.svg?style=flat)](https://github.com/alinmear/docker-conanexiles)
-[![Github Forks](https://img.shields.io/github/forks/alinmear/docker-conanexiles.svg?style=flat?label=github%20forks)](https://github.com/alinmear/docker-conanexiles/)
-[![Gitter](https://img.shields.io/gitter/room/alinmear/docker-conanexiles.svg?style=flat)](https://gitter.im/alinmear/docker-conanexiles)
-[![Donation](https://img.shields.io/badge/Buy%20me%20a-coffee-blue?style=flat)](https://www.paypal.com/donate?business=VGB57FGZRDEFQ&currency_code=EUR)
+---
+**NOTE**
+
+Fork of <https://github.com/alinmear/docker-conanexiles>, go there for the original.
 
 ---
 **NOTE**
@@ -25,6 +24,9 @@ While configuring my server and trying to fix some shortcomings i stumbled over 
 * Running multiple instances with multiple config directories
 * RCON Support (Ingame Broadcast Msgs for Server events like update) --> DEFAULT ENABLED
 
+### New features:
+
+* Scheduled daily or weekly server restarts
 ---
 
 ## Usage
@@ -96,6 +98,8 @@ services:
       - "CONANEXILES_Game_RconPlugin_RconPassword=REDACTED"
       - "CONANEXILES_Game_RconPlugin_RconPort=25575"
       - "CONANEXILES_Game_RconPlugin_RconMaxKarma=60"
+      # Sceduled Server Restarts
+      - "CONANEXILES_RESTARTS=0:00"
       # Mods
       - "CONANEXILES_MODS=880454836,1159180273,1389908968,1369743238,2050780234,2356146223,1701136207"
       # Very Good Defaults
@@ -395,6 +399,20 @@ ENV-VARS to Setup:
 
 Default: CONANEXILES_MASTERSERVER = 1 (only the master server is able to make updates)
 Default: CONANEXILES_INSTANCENAME = saved (the default config folder name)
+
+---
+
+## Scheduled server restarts
+
+Automatic server restarts can be scheduled with the global env variable `CONANEXILES_RESTARTS`. It's a comma separated list of restart times.
+
+Daily restarts are set as 12 or 24 hour times. Minutes are required for 24 hour times, but seconds are optional in both formats.
+* Valid: 5:20, 16:40, 08:10:59, 12:00 pm, 1:20 am
+* Invalid: 6 am, 0:20 pm, Midnight, 5 o'clock
+
+Weakly restarts accept the same time formats as daily restarts, but they are prefixed with a weekday. The weekday may be a 3 letter abbreviation.
+* Valid: Monday 12:00, Sun. 5 PM, Tue 12:00:00
+* Invalid: Thurs 12:00, S. 5 PM, Tue:12:00:00
 
 ---
 
