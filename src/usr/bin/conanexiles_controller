@@ -287,7 +287,7 @@ restart_check() {
     # If the time for the next restart is valid and not yet passed, return error
 	local format="%Y-%m-%d %H:%M:%S"
     local now=$(date "+$format")
-    if [ ! -z $restart_time ] && [[ $restart_time == NEVER || $now < $restart_time ]]; then
+    if [ ! -z "$restart_time" ] && [[ "$restart_time" == NEVER || "$now" < "$restart_time" ]]; then
         return 1
     fi
 
@@ -317,9 +317,9 @@ restart_check() {
         fi
 
         # Update next restart time
-        if [ ! -z $time ] && [[ $now < $time && $time < $restart_time ]]; then
+        if [ ! -z "$time" ] && [[ "$now" < "$time" && "$time" < "$restart_time" ]]; then
             restart_time=$time
-        elif [ ! -z $next ] && [[ $now < $next && $next < $restart_time ]]; then
+        elif [ ! -z "$next" ] && [[ "$now" < "$next" && "$next" < "$restart_time" ]]; then
             restart_time=$next
         fi
     done
