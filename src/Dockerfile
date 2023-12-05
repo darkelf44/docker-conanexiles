@@ -33,6 +33,12 @@ RUN dpkg --add-architecture i386 \
 ADD https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks /usr/bin/winetricks
 RUN chmod +x /usr/bin/winetricks
 
+# Download Wine Mono and Wine Gecko
+RUN mkdir -p /usr/share/wine/mono /usr/share/wine/gecko \
+    && wget -q http://dl.winehq.org/wine/wine-mono/5.1.1/wine-mono-5.1.1-x86.msi -O /usr/share/wine/mono/wine-mono-5.1.1-x86.msi \
+    && wget -q http://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86_64.msi -O /usr/share/wine/gecko/wine-gecko-2.47.2-x86_64.msi \
+    && wget -q http://dl.winehq.org/wine/wine-gecko/2.47.2/wine-gecko-2.47.2-x86.msi -O /usr/share/wine/gecko/wine-gecko-2.47.2-x86.msi
+
 RUN apt-get update \
     && apt-get install -y x11vnc strace cabextract \
     && apt-get clean \
