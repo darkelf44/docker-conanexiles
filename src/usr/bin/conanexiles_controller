@@ -62,7 +62,8 @@ function stop_server() {
 
     # wait until the server process is gone
     while ps axg | grep -F 'ConanSandboxServer' | grep -v -F 'grep' > /dev/null; do
-      notifier_error "Seems I can't stop the server. Help me!"
+      notifier_error "Can't stop the server! Trying to terminate it directly..."
+	  WINEPREFIX=/wine wineserver -k
       sleep 5
     done
 }
