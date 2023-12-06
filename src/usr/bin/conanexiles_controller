@@ -118,7 +118,7 @@ start_shutdown_timer() {
         if [[ ${CONANEXILES_Game_RconPlugin_RconEnabled} == 1 ]]; then
             # Only notify at the start, and at 15, 5, 1 minutes left
             _time_left=$(( _t_val - _i ))
-            ([[ $_i == 0 ]] || [[ $_time_left == 15 ]] || [[ $_time_left == 5 ]] || [[ $_time_left == 1 ]]) && \
+            ([[ $_i == 0 ]] || [[ $_time_left == 5 ]] || [[ $_time_left == 1 ]]) && \
                         /usr/bin/rconcli broadcast --type shutdown --value $_time_left
         fi
         sleep 60
