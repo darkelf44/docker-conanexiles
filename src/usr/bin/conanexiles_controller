@@ -195,7 +195,7 @@ login anonymous
 force_install_dir /conanexiles
 """ > $MODS_INSTALL_SCRIPT
 
-    for modid in "${modids[@]}" 
+    for modid in "${modids[@]}"
     do
         # skip any comment lines
         [[ "$modid" =~ ^#.*$ ]] && continue
@@ -214,7 +214,7 @@ install_mods() {
     if [ -z $CONANEXILES_MODS ]
     then
         notifier_info "Skipping Mods Installation. No Mods are specified via CONANEXILES_MODS"
-        return 
+        return
     fi
 
     # Read modids from env
@@ -240,7 +240,7 @@ install_mods() {
 
         notifier_info "Got mod with id $modid"
 
-        if [ -d /conanexiles/steamapps/workshop/content/$APPID_Mods/$modid ] 
+        if [ -d /conanexiles/steamapps/workshop/content/$APPID_Mods/$modid ]
         then
             for filename in $(cd /conanexiles/steamapps/workshop/content/$APPID_Mods/$modid && find -name "*.pak")
             do
@@ -267,7 +267,7 @@ update_check() {
     # If we fail to retrieve the buildid return
     if [ -z $ab ]
     then
-        notifier_error "Failed to retrieve buildID from Steam. Aborting update_check" 
+        notifier_error "Failed to retrieve buildID from Steam. Aborting update_check"
         return 1
     fi
 
