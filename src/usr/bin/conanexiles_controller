@@ -50,6 +50,7 @@ function start_server() {
         notifier_warn "Tried to start server. Server is already running..."
         return
     else
+        start_time=$SECONDS
         supervisorctl status conanexilesServer | grep RUNNING > /dev/null
         [[ $? != 0 ]] && supervisorctl start conanexilesServer
     fi
@@ -57,6 +58,7 @@ function start_server() {
 
 function stop_server() {
     # stop the server
+    stop_time=$SECONDS
     supervisorctl status conanexilesServer | grep RUNNING > /dev/null
     [[ $? == 0 ]] && supervisorctl stop conanexilesServer
 
@@ -169,6 +171,12 @@ function do_update() {
 }
 
 function do_restart() {
+	# Do not restart the server within the cooldown period
+	[[ -z "${CONANEXILES_RESTART_COOLDOWN}" ]] && CONANEXILES_RESTART_COOLDOWN=300
+	if [[ $(($SECONDS - $start_time)) < $CONANEXILES_RESTART_COOLDOWN ]]; then
+		return
+	fi
+
     # Stop server
     if [[ $1 == 1 ]];then
         stop_server
@@ -332,6 +340,29 @@ restart_check() {
     return 0
 }
 
+freeze_check() {
+    # This function examines the logfile to detect if the server is frozen
+    # return 0 if the server is frozen
+    # return 1 if the server is not frozen
+
+    # Path to the logfile
+    if [ -z $CONANEXILES_INSTANCENAME ]
+    then
+        local _path="/conanexiles/ConanSandbox/Saved/Logs/ConanSandbox.log"
+    else
+        local _path="/conanexiles/ConanSandbox/${CONANEXILES_INSTANCENAME}/Saved/Logs/ConanSandbox.log"
+    fi
+
+    # Check directly for OOM error in logs
+    if grep -q "^\[.*\]\[.*\]LogMemory:Warning: Freeing [0-9]* bytes from backup pool to handle out of memory." < $_path; then
+        # Return success - freeze detected
+        return 0
+    fi
+
+    # Return failure - nothing to do
+    return 1
+}
+
 start_master_loop() {
 
     notifier_info "Mode: Master - Instance: $(hostname)"
@@ -358,6 +389,9 @@ start_master_loop() {
 
         # Sceduled restart
         restart_check && do_restart 0
+
+        # Restart a frozen server
+        freeze_check && do_restart 1
 
         # If the Server crashes we are restarting it
         # NOTE: We are not using supervisord to handle the restart
@@ -389,6 +423,9 @@ start_slave_loop() {
 
         # Sceduled restart
         restart_check && do_restart 0
+
+        # Restart a frozen server
+        freeze_check && do_restart 1
 
         sleep 10
     done
