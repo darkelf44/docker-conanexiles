@@ -51,6 +51,7 @@ function start_server() {
         return
     else
         start_time=$SECONDS
+		notifier_info "Starting server: $start_time"
         supervisorctl status conanexilesServer | grep RUNNING > /dev/null
         [[ $? != 0 ]] && supervisorctl start conanexilesServer
     fi
@@ -173,7 +174,8 @@ function do_update() {
 function do_restart() {
 	# Do not restart the server within the cooldown period
 	[[ -z "${CONANEXILES_RESTART_COOLDOWN}" ]] && CONANEXILES_RESTART_COOLDOWN=300
-	if [[ $(($SECONDS - $start_time)) < $CONANEXILES_RESTART_COOLDOWN ]]; then
+	if [[ -z "$start_time"]] || [[ $(($SECONDS - $start_time)) < $CONANEXILES_RESTART_COOLDOWN ]]; then
+		notifier_info "Not restarting: Server was started less than ${CONANEXILES_RESTART_COOLDOWN} seconds ago"
 		return
 	fi
 
@@ -354,7 +356,8 @@ freeze_check() {
     fi
 
     # Check directly for OOM error in logs
-    if grep -q "^\[.*\]\[.*\]LogMemory:Warning: Freeing [0-9]* bytes from backup pool to handle out of memory." < $_path; then
+    if tail -n 15 "$_path" | grep -q "LogMemory:Warning: Freeing [0-9]* bytes from backup pool to handle out of memory."; then
+		notifier_info "Freeze detected. Trying to restart the server..."
         # Return success - freeze detected
         return 0
     fi
