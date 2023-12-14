@@ -174,7 +174,7 @@ function do_update() {
 function do_restart() {
 	# Do not restart the server within the cooldown period
 	[[ -z "${CONANEXILES_RESTART_COOLDOWN}" ]] && CONANEXILES_RESTART_COOLDOWN=300
-	if [[ -z "$start_time"]] || [[ $(($SECONDS - $start_time)) < $CONANEXILES_RESTART_COOLDOWN ]]; then
+	if [[ -z "$start_time" ]] || [[ $(($SECONDS - $start_time)) < $CONANEXILES_RESTART_COOLDOWN ]]; then
 		notifier_info "Not restarting: Server was started less than ${CONANEXILES_RESTART_COOLDOWN} seconds ago"
 		return
 	fi
