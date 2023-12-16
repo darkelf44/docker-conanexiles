@@ -81,11 +81,11 @@ function backup_server() {
     # backup the server db and config
     if [ -z $CONANEXILES_INSTANCENAME ]
     then
-        local _src="/conanexiles/ConanSandbox/${CONANEXILES_INSTANCENAME}"
-        local _dst="/conanexiles/ConanSandbox/${CONANEXILES_INSTANCENAME}.build-$(get_installed_build).backup"
-    else
         local _src="/conanexiles/ConanSandbox/Saved"
         local _dst="/conanexiles/ConanSandbox/Saved.build-$(get_installed_build).backup"
+    else
+        local _src="/conanexiles/ConanSandbox/${CONANEXILES_INSTANCENAME}"
+        local _dst="/conanexiles/ConanSandbox/${CONANEXILES_INSTANCENAME}.build-$(get_installed_build).backup"
     fi
 
     # remove backup dir if already exists (should never happen)
